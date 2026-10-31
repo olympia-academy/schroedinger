@@ -53,6 +53,15 @@ and Linux on Python 3.10 and 3.12; those hosted jobs run after publication.
 
 ## Interpretation limits
 
+The [default double-slit sensitivity study](SENSITIVITY.md) measures a
+central screen-slab profile at T=7.03125. At the same dt, the 512x256 and
+768x384 profiles differ by 17.30% relative L1, including re-rasterized
+geometry. Small probability-budget error therefore does not certify the
+default fringe pattern. The study records time, box and absorber variations,
+with a runnable script and committed data. The
+[Norwegian numerical guide](NUMERIKK.nb.md) explains their physical effects
+and the difference between Crank–Nicolson and RK4.
+
 - Hard-wall kinetic evolution uses sine transforms on connected grid intervals.
   Ghost-node Dirichlet boundaries and rasterized geometry are part of the model.
 - Directional splitting at corners has finite time error. Refine dt and grid

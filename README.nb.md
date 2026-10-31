@@ -4,6 +4,9 @@
 
 Numeriske kvantesimuleringer for fysikk, forskning og undervisning.
 
+Se [fra likning til simulering](docs/NUMERIKK.nb.md) for en norsk forklaring
+av randbetingelser, Crank–Nicolson mot RK4 og et lite kommentert kodeeksempel.
+
 ![Rettet dobbeltspaltedemo ved t = 7,03125](docs/images/double-slit.png)
 
 Gjenskap figuren med `python -m schroedinger --headless --no-progress --snapshot-time 7 --output docs/images/double-slit.png`.
@@ -88,6 +91,28 @@ må både rutenett og tidssteg undersøkes for konvergens. Sammenlikn ved samme
 fysiske sluttid: Hvis dt halveres, dobles antall steg. En gaussisk bølgepakke
 har en energifordeling, så transmisjon gjennom en endelig vegg kan omfatte
 både tunnelering og komponenter med energi over barrieren.
+
+Begge 1D-metodene kan velges eksplisitt:
+
+```powershell
+& '.\.venv\Scripts\python.exe' -m schroedinger --dimension 1 --method crank_nicolson
+& '.\.venv\Scripts\python.exe' -m schroedinger --dimension 1 --method rk4
+```
+
+Crank–Nicolson er implisitt, av andre orden i tid og normbevarende uten
+absorber. RK4 er eksplisitt, av fjerde orden i tid, men har en
+stabilitetsgrense og kan gi normdrift. Begge har rom- og fasefeil.
+Valgene gjelder 1D; 2D bruker egne Fourier- og sinusmetoder.
+
+Ytterkantene er også en del av modellen: 2D med fritt/endelig potensial
+er periodisk, mens 1D og 2D-spalter har reflekterende Dirichlet-ytterkanter
+uten absorber. Absorberen demper bølgen før kanten, men er ikke en eksakt
+åpen grense. `--no-absorber` endrer ikke randbetingelsen. Se
+[randforklaringen](docs/NUMERIKK.nb.md#to-forskjellige-grenser-spalteveggen-og-ytterkanten)
+og [følsomhetsundersøkelsen](docs/SENSITIVITY.md).
+Der endret den målte sentrale profilen seg med omtrent 17 % mellom
+512×256 og 768×384 ved samme dt, inkludert endret rastergeometri.
+Standardinnstillingene er derfor ikke dokumentert romlig konvergert.
 
 Gaussbredden beholder den opprinnelige definisjonen:
 psi er proporsjonal med exp(-((x-x0)/sigma)^2). Standardavviket i posisjon
