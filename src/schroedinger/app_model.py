@@ -25,7 +25,7 @@ class Experiment:
     ny: int = 256
     dt: float = 0.0390625
     steps: int = 180
-    frames: int = 41
+    frames: int = 101
     mass: float = 10.0
     hbar: float = 1.0
     px: float = 20.0

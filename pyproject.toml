@@ -21,6 +21,9 @@ schroedinger-app = "schroedinger.app:entrypoint"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+schroedinger = ["player.mjs"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"

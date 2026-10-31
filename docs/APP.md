@@ -58,7 +58,7 @@ erstatter redigeringsinnstillingene, men sletter ikke fullførte resultater.
    beholder tidligere fullførte resultater.
 3. Trykk **Spill av** for å animere de lagrede bildene. **Pause** stopper
    visningen; **Start på nytt** spiller fra første bilde. **Hastighet**
-   velger 2, 4 eller 8 bilder per sekund og endrer bare visningen.
+   velger 2, 4, 8, 12 eller 24 bilder per sekund (standard: 12) og endrer bare visningen.
    Flytting av **Lagret tidssteg** pauser avspillingen ved det valgte bildet.
    Den stopper automatisk ved siste bilde. Trykk Spill av igjen for å starte
    fra begynnelsen. Tittelen viser faktisk fysisk tid og sannsynlighet.
@@ -96,13 +96,22 @@ I Sammenlikn beholdes den valgte utgangskjøringen sammen med det nye
 resultatet, også når du velger den eldste av de to. De to bildene bruker
 samme 2D-fargeskala og viser nærmeste faktisk lagrede tidspunkt.
 
-Avspillingen er pauset når du velger en annen kjøring. Spilleren bruker bare
-lagrede tettheter og starter ingen ny beregning. Bare bildeområdet og dets
-mål oppdateres under avspilling; diagrammer og sammenlikninger beregnes ikke
-på nytt for hvert bilde. Hastigheten er et mål for visningen, og langsommere
-maskiner kan hoppe over bilder for å følge avspillingsklokken. Den fysiske
-tiden følger alltid det faktisk viste, lagrede bildet.
-PNG-knappen ved spilleren laster ned det viste bildet.
+Bildene klargjøres og lastes inn én gang før knappene blir aktive. Deretter
+spiller nettleseren dem av lokalt, uten Python-tegning eller servermeldinger
+for hvert bilde. Knappene, tidsvelgeren og målene oppdateres i samme spiller.
+Avspillingen pauses ved valg av en annen kjøring, oppdatering av resten av
+appen eller skjuling av nettleserfanen. Langsommere maskiner kan hoppe over
+bilder for å følge avspillingsklokken. Fysisk tid og sannsynlighet følger
+alltid det faktisk viste, lagrede bildet. Ingen mellomliggende tidsbilder
+beregnes eller interpoleres under avspilling.
+
+Nye standardkjøringer lagrer 91 bilder i stedet for 37. Tidligere resultater
+beholder sine opprinnelige bilder; kjør forsøket på nytt for tettere avspilling.
+2D-spilleren bruker PNG med 256 Inferno-farger, felles fast fargeskala og
+barriereomriss på det opprinnelige rutenettet. Dette er en visningskoding;
+lagrede float32-tettheter og diagnostikk beholdes. 1D-tetthetene overføres
+uten tap som float32. PNG-knappen lagrer det viste diagrammet med akser og
+tittel. De statiske sammenlikningsbildene tegnes fortsatt med Matplotlib.
 
 ## Numerical interpretation
 
@@ -144,7 +153,8 @@ down the server. Use the terminal to stop it.
 - `app_model.py`: experiment settings, validation, solver calls and exports.
 - `app_presets.py`: fixed presets, final-time fitting and controlled-change helpers.
 - `app_controls.py`: simple, comparison and advanced editing, with persistent drafts.
-- `app_playback.py`: elapsed-time playback of saved frames, pause/seek/restart and image caching.
+- `app_playback.py`: cached display data and the browser component.
+- `player.mjs`: local canvas rendering and playback controls, with no per-frame server calls.
 - `app_jobs.py` / `app_worker.py`: subprocess lifecycle and cancellation.
 - `web_app.py`: Streamlit controls and result comparison.
 
@@ -157,12 +167,20 @@ python -m pytest -q
 
 Tests cover CLI/app result agreement, both 1D methods, JSON/NPZ round trips,
 geometry reporting, resource limits, real worker completion/cancellation,
-UI method selection, two-run comparison and frame scrubbing without
+UI method selection, two-run comparison and cached playback without
 recalculation. Additional tests cover exact final-time fitting, the three-field
 default, settings surviving mode changes, preset resets, and preservation of
 the selected baseline when a third comparison is run.
-Playback tests check the wall-clock advance, pause, seeking, restart, speed
-changes and automatic stop, with worker startup explicitly forbidden during playback.
+Python tests check pixel orientation, fixed color mapping, lossless 1D density
+encoding, physical timestamps and diagnostics, with propagation forbidden during
+preparation. JavaScript tests check the wall-clock advance, pause, seeking,
+restart, speed changes and automatic stop:
+
+```bash
+node --test tests/player.test.mjs
+```
+
+Node is needed only for these developer tests, not to run the app.
 The optional UI tests skip when Streamlit is not installed.
 CI runs the app tests on Windows, macOS and Linux with Python 3.12.
 
