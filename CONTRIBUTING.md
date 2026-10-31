@@ -17,5 +17,6 @@ For numerical work:
 - Preserve author attribution and the original project's references.
 
 Treat demo defaults as qualitative settings. A prettier animation is not
-evidence of improved accuracy. Keep generated plots, local environments,
-caches and result files out of commits.
+evidence of improved accuracy. Keep local environments, caches and routine
+experiment outputs out of commits. Curated documentation figures may be
+versioned with their reproduction command and configuration metadata.

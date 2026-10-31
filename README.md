@@ -27,6 +27,11 @@ The following examples use `python`; on Windows you can substitute
 `& '.\.venv\Scripts\python.exe'` without activating the environment.
 The default example is a 2D wave train passing through two slits.
 
+![Corrected double-slit demo at t = 7.03125](docs/images/double-slit.png)
+
+Reproduce this figure with `python -m schroedinger --headless --no-progress --snapshot-time 7 --output docs/images/double-slit.png`.
+The [JSON report](docs/images/double-slit.json) records the configuration and actual saved time.
+
 ## Explore
 
 ```bash
@@ -44,34 +49,20 @@ The title shows physical time and the probability remaining in the box.
 Closing the window ends the program. Parameters are command-line options;
 editing source files is unnecessary.
 
-### Low-load playback on Windows
-
-Run one simulation window at a time. To use the same corrected 2D experiment
-with lower process priority, one CPU and playback paused on opening:
-
-```powershell
-& '.\.venv\Scripts\python.exe' tools/view_low_load.py
-```
-
-Alternatively, double-click `start-low-load.cmd` after installation.
-Press **Play** when ready. This changes scheduling and display settings,
-not the physical parameters, grid or time step. It also uses a smaller
-display and an 80 ms playback interval.
-
-Concurrent full-size GUI runs caused desktop stuttering during local Windows
-testing; responsiveness returned after stopping the simulations. The exact
-bottleneck was not established. This launcher is an option to reduce load,
-not a claim that it fixes every source of desktop stuttering.
-
 For output without opening a window:
 
 ```bash
 python -m schroedinger --headless --output outputs/double-slit.png
+python -m schroedinger --headless --snapshot-time 7 --output outputs/at-t7.png
 ```
 
-This writes a middle-frame PNG and a JSON report containing the exact
+This writes a selected-frame PNG and a JSON report containing the exact
 configuration, saved times, probability, absorbed probability, solver and
-snapshot memory. The entire time history remains available through the Python
+snapshot memory. Slit demos automatically choose a post-crossing preview
+(about t=7.2 for the defaults); other scenarios use mid-time. Use
+`--snapshot-time` to choose a physical time explicitly. The closest saved
+frame is exported, and its actual index and time are recorded in JSON.
+The entire time history remains available through the Python
 API. The 2D demo stores float32 densities (one quarter of the complex snapshot
 storage); Python API calls retain complex states by default.
 
@@ -178,3 +169,10 @@ Benjamin J. Land's [Quantum mechanics simulation](https://ben.land/post/2022/03/
 The original 2D extension was developed with an AI coding assistant. This
 revision adds validated propagators, shared configuration, diagnostics,
 playback controls and automated tests while retaining the original Git history.
+
+## Original version
+
+The unchanged starting point is preserved under the
+[`original` tag](https://github.com/olympia-academy/schroedinger/tree/original),
+pointing to commit `a082b015aec9e74634d2331f9bca0149fc52f8ca`.
+It contains the original standalone 1D and 2D scripts and illustrations.

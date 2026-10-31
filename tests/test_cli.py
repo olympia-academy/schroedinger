@@ -21,6 +21,7 @@ def test_2d_cli_exports_real_results(tmp_path, scenario):
     assert data["frames"] == 3
     assert data["max_probability_budget_error"] < 1e-10
     assert "density" in data["frame_storage"]
+    assert data["snapshot_time"] == data["times"][data["snapshot_frame"]]
 
 
 def test_1d_legacy_entry_point_and_bad_cli_arguments(tmp_path):
@@ -51,6 +52,53 @@ def test_imported_legacy_main_keeps_its_dimension_and_handles_zero_steps(tmp_pat
     assert result.solver == solver
     assert len(result) == 1
     assert result.times[0] == 0
+
+
+def test_default_slit_snapshot_is_after_crossing_and_before_absorption():
+    from schroedinger import Config2D
+    from schroedinger.cli import snapshot_index
+    config = Config2D()
+    times = np.arange(201)*4*config.initial_values.dt
+    frame = snapshot_index(times, config)
+    assert frame == 46
+    assert times[frame] == pytest.approx(7.1875)
+    assert snapshot_index(times, config, 7) == 45
+    config.initial_values.initial_momentum = (0, 0)
+    assert snapshot_index(times, config) == 100
+    config.initial_values.initial_position = (8, 0)
+    config.initial_values.initial_momentum = (-20, 0)
+    assert times[snapshot_index(times, config)] == pytest.approx(5.9375)
+
+
+def test_non_slit_and_short_snapshots_are_valid(config2):
+    from schroedinger.cli import snapshot_index
+    assert snapshot_index([0, 0.1, 0.23], config2) == 1
+    config2.constants.potential_type = "double_slit"
+    assert snapshot_index([0], config2) == 0
+    assert snapshot_index([0, 0.1, 0.2], config2) == 2
+
+
+@pytest.mark.parametrize("time", [float("nan"), float("inf"), -1, 100])
+def test_invalid_snapshot_time_is_rejected_before_simulation(monkeypatch, time):
+    import schroedinger.cli as cli
+    def unexpected_simulation(*args, **kwargs):
+        raise AssertionError("Invalid export time must fail before running a simulation")
+    monkeypatch.setattr(cli, "simulate", unexpected_simulation)
+    with pytest.raises(SystemExit) as error:
+        cli.main(["--steps", "0", "--headless", "--snapshot-time", str(time)])
+    assert error.value.code == 2
+
+
+def test_explicit_snapshot_export_reports_actual_saved_time(tmp_path):
+    from schroedinger.cli import main
+    output = tmp_path / "snapshot.png"
+    main(["--scenario", "free", "--nx", "48", "--ny", "32", "--px", "2",
+          "--dt", "0.02", "--steps", "3", "--save-every", "2", "--headless",
+          "--no-progress", "--snapshot-time", "0.04", "--output", str(output)])
+    data = json.loads(output.with_suffix(".json").read_text())
+    assert data["snapshot_frame"] == 1
+    assert data["snapshot_time"] == pytest.approx(0.04)
+    assert data["snapshot_requested_time"] == pytest.approx(0.04)
 
 
 def test_animation_scrubbing_preserves_saved_frames(config2):

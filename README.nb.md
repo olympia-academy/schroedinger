@@ -4,6 +4,11 @@
 
 Numeriske kvantesimuleringer for fysikk, forskning og undervisning.
 
+![Rettet dobbeltspaltedemo ved t = 7,03125](docs/images/double-slit.png)
+
+Gjenskap figuren med `python -m schroedinger --headless --no-progress --snapshot-time 7 --output docs/images/double-slit.png`.
+[JSON-rapporten](docs/images/double-slit.json) inneholder konfigurasjonen og faktisk lagret tidspunkt.
+
 ## Installer på Windows
 
 Kjør fra prosjektmappen i PowerShell:
@@ -43,22 +48,6 @@ Bruk Pause/Play, Restart og glidebryteren for bilder i animasjonen. Tittelen
 viser fysisk tid og samlet sannsynlighet som er igjen i simuleringsområdet.
 Lukk vinduet for å avslutte.
 
-### Lavbelastningsmodus på Windows
-
-Kjør ett simuleringsvindu om gangen. Dobbeltklikk `start-low-load.cmd`, eller
-kjør følgende fra prosjektmappen:
-
-```powershell
-& '.\.venv\Scripts\python.exe' tools/view_low_load.py
-```
-
-Denne starter den rettede 2D-demoen med lav prosessprioritet, én CPU og
-avspillingen pauset. Trykk **Play** når du er klar. Fysiske parametere,
-rutenett og tidssteg er de samme; bare prosess- og visningsinnstillinger
-endres. Under lokal Windows-testing ble PC-en treg med samtidige fulle
-GUI-kjøringer og normal igjen da simuleringene ble stoppet. Den nøyaktige
-flaskehalsen er foreløpig ikke fastslått.
-
 Parametere kan endres i kommandoen, for eksempel `--slit-width 0.8`,
 `--px 15`, `--dt 0.01` og `--nx 1024`. Kildekoden trenger ikke endres.
 
@@ -66,11 +55,16 @@ Parametere kan endres i kommandoen, for eksempel `--slit-width 0.8`,
 
 ```powershell
 & '.\.venv\Scripts\python.exe' -m schroedinger --headless --output outputs/forsok.png
+& '.\.venv\Scripts\python.exe' -m schroedinger --headless --snapshot-time 7 --output outputs/ved-t7.png
 & '.\.venv\Scripts\python.exe' -m pytest -q
 ```
 
 Eksporten skriver en PNG og en JSON med konfigurasjon, tidsverdier,
 sannsynlighet, absorbert sannsynlighet, metode og minnebruk for bildene.
+For spalteforsøk velges automatisk et bilde etter at pakken har passert
+spaltene, omtrent t=7,2 med standardverdiene. Andre scenarioer bruker midten
+av tidsintervallet. `--snapshot-time` velger ønsket fysisk tidspunkt;
+nærmeste lagrede bilde brukes. Faktisk bildeindeks og tidspunkt lagres i JSON.
 
 ## Hva er rettet?
 
@@ -111,3 +105,10 @@ Det opprinnelige 1D-prosjektet ble utviklet av medforfatterne
 Benjamin J. Lands [Quantum mechanics simulation](https://ben.land/post/2022/03/09/quantum-mechanics-simulation/).
 Den opprinnelige 2D-utvidelsen ble senere utviklet med en KI-basert
 programmeringsassistent. Den videre utviklingen skjer i Akademie Olympia.
+
+## Originalversjonen
+
+Det uendrede utgangspunktet er bevart med
+[`original`-taggen](https://github.com/olympia-academy/schroedinger/tree/original),
+som peker på commit `a082b015aec9e74634d2331f9bca0149fc52f8ca`.
+Der finnes de opprinnelige selvstendige 1D- og 2D-skriptene og illustrasjonene.

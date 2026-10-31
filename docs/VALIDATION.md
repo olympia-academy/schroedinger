@@ -35,6 +35,10 @@ subdivisions. Its final probability agrees, and the probability plus the
 measured absorber loss is one to numerical tolerance. Matrix and pointwise
 expectation operators, nonunit hbar, invalid parameters, saved time stamps,
 CLI exports and playback controls also have regression coverage.
+Export tests check that slit previews occur after crossing instead of late
+absorption, explicit physical times select the nearest saved frame, and
+invalid snapshot times fail before a simulation starts. PNG/JSON exports
+record the actual selected frame and its physical time.
 
 ## End-to-end default runs
 
@@ -48,15 +52,6 @@ SciPy 1.18.1 and Matplotlib 3.11.2. GitHub Actions is configured for Windows
 and Linux on Python 3.10 and 3.12; those hosted jobs run after publication.
 
 ## Interpretation limits
-
-Local interactive Windows testing found desktop stuttering when concurrent
-full-size GUI simulations were launched. Responsiveness returned after the
-processes stopped. Available RAM was approximately 14–15 GiB out of 32 GiB;
-a short CPU sample did not establish sustained CPU saturation or a root cause.
-The user subsequently tried and accepted the low-load launcher: one simulation,
-below-normal Windows priority, one logical CPU, smaller display, 80 ms playback,
-and playback paused initially. `tools/view_low_load.py` reproduces that setup
-without changing the corrected experiment's physical parameters.
 
 - Hard-wall kinetic evolution uses sine transforms on connected grid intervals.
   Ghost-node Dirichlet boundaries and rasterized geometry are part of the model.

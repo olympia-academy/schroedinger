@@ -44,6 +44,8 @@ def parser():
     p.add_argument("--no-progress", action="store_true")
     p.add_argument("--headless", action="store_true", help="Save a preview and JSON report instead of opening a window")
     p.add_argument("--output", type=Path, help="PNG destination (also writes a JSON sidecar)")
+    p.add_argument("--snapshot-time", type=float,
+                   help="Physical time for the PNG; selects the closest saved frame")
     return p
 
 
@@ -120,11 +122,43 @@ def report(result, config):
     }
 
 
+def snapshot_index(times, config, requested_time=None):
+    """Pick a saved frame at a requested time or after the slit crossing.
+
+    The automatic slit preview follows the incident packet centre a quarter
+    of the way into the downstream region. Other scenarios use mid-time.
+    This is a display heuristic; it does not change numerical evolution.
+    """
+    times = np.asarray(times)
+    if requested_time is not None:
+        if not np.isfinite(requested_time) or not times[0] <= requested_time <= times[-1]:
+            raise ValueError(f"snapshot-time must be between {times[0]:g} and {times[-1]:g}")
+        target = requested_time
+    else:
+        target = (times[0] + times[-1])/2
+        if config.dimension == 2 and config.constants.potential_type in {"single_slit", "double_slit"}:
+            iv = config.initial_values
+            velocity = iv.initial_momentum[0] / config.constants.mass
+            if velocity != 0:
+                hit_time = (config.barrier.barrier_x - iv.initial_position[0]) / velocity
+                if hit_time >= 0:
+                    edge = iv.x_max if velocity > 0 else iv.x_min
+                    screen = config.barrier.barrier_x + 0.25*(edge-config.barrier.barrier_x)
+                    target = (screen-iv.initial_position[0]) / velocity
+                    target = np.clip(target, times[0], times[-1])
+    return int(np.argmin(np.abs(times-target)))
+
+
 def main(argv=None):
     p = parser()
     args = p.parse_args(argv)
     try:
         config = configuration(args)
+        if args.snapshot_time is not None:
+            if not (args.headless or args.output is not None):
+                raise ValueError("--snapshot-time requires --headless or --output")
+            snapshot_index([0, config.simulation_params.steps*config.initial_values.dt],
+                           config, args.snapshot_time)
         psi = get_wave_packet(config)
         potential, mask = get_potential(config), get_barrier_mask(config)
         result = simulate(psi, potential, config, mask)
@@ -141,10 +175,14 @@ def main(argv=None):
     if args.headless or args.output is not None:
         output = args.output or Path("outputs") / f"{args.dimension}d-{config.constants.potential_type}.png"
         output.parent.mkdir(parents=True, exist_ok=True)
+        frame = snapshot_index(result.times, config, args.snapshot_time)
         animation._fig.canvas.draw()
-        animation._func((len(result)-1)//2)
+        animation._func(frame)
         animation._fig.savefig(output, dpi=140)
-        output.with_suffix(".json").write_text(json.dumps(report(result, config), indent=2), encoding="utf-8")
+        summary = report(result, config)
+        summary.update(snapshot_frame=frame, snapshot_time=float(result.times[frame]),
+                       snapshot_requested_time=args.snapshot_time)
+        output.with_suffix(".json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
         print(f"Saved {output} and {output.with_suffix('.json')}")
     import matplotlib.pyplot as plt
     if args.headless:
