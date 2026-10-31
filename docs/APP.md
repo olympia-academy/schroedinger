@@ -44,21 +44,42 @@ This first version is for local use, not a public multi-user service.
 
 ## Slik prøver dere appen
 
-1. Velg 1D eller 2D og et forsøk i sidepanelet. Endring av dimensjon laster
-   et nytt standardoppsett. Andre felt gjelder det valgte forsøket.
-2. Juster tid, oppløsning, bølge, potensial eller boks. Trykk **Kjør
-   simulering** for å bruke endringene i skjemaet. Ingen simulering starter
-   når siden åpnes eller når du bare viser et resultat.
-3. Appen viser at beregningen kjører. **Avbryt beregningen** stopper
-   prosessen og beholder tidligere fullførte resultater.
-4. Bruk **Lagret tidssteg** for å se lagrede tetthetsbilder. Tittelen viser
+Startsiden bruker **Utforsk**, med fire ferdige utgangspunkt:
+dobbeltspalte (2D), enkeltspalte (2D), tunnelering (1D) og fri bølgepakke (2D).
+For dobbeltspalten ser du bare bredde, avstand og fysisk sluttid, i tillegg
+til valg av forsøk og Kjør-knappen. Hvert oppsett velger dimensjon, metode,
+bølge, rutenett og øvrige grunnverdier for deg. Et nytt ferdig oppsett
+erstatter redigeringsinnstillingene, men sletter ikke fullførte resultater.
+
+1. Velg et oppsett og juster eventuelt de få synlige egenskapene.
+   **Fysisk sluttid** angir hvor lenge fysikken skal utvikles. Antall steg
+   beregnes automatisk. Endring av kontroller starter ingen beregning.
+2. Trykk **Kjør simulering**. **Avbryt beregningen** stopper prosessen og
+   beholder tidligere fullførte resultater.
+3. Bruk **Lagret tidssteg** for å se lagrede tetthetsbilder. Tittelen viser
    faktisk fysisk tid og sannsynlighet i boksen.
-5. Gi neste kjøring et eget navn, endre én parameter og kjør igjen.
-   **Sammenlikn de to siste kjøringene** viser bilder og parametere ved
-   nærmeste lagrede tid. 2D-bildene bruker samme fargeskala i sammenlikningen.
+4. Velg **Sammenlikn** i sidepanelet. Velg en fullført kjøring som utgangspunkt,
+   deretter én parameter og dens nye verdi. Sluttiden og andre innstillinger
+   beholdes. Appen viser hva som faktisk endret seg, inkludert eventuelle
+   avledede tidsverdier og endrede diskrete spalteåpninger.
+5. Velg **Avansert** når du vil endre masse, ħ, metode, rutenett, boks,
+   absorber eller andre parametere. Andre forsøkstyper finnes også her.
+   Bytte mellom visningene beholder de redigerte grunnverdiene. Endring av
+   dimensjon i Avansert laster standardverdier for den nye dimensjonen.
 6. Last ned JSON-oppsett/rapport, PNG-bilde og CSV-regnskap. Den andre
    bidragsyteren kan åpne JSON-filen under **Åpne lagret oppsett → Bruk
-   oppsett** og kjøre samme forsøk på sin maskin.
+   oppsett**; det åpnes i Avansert med samme faktiske tidsverdier.
+
+**Beregningsdetaljer** viser faktisk dt, antall steg, rutenettavstand,
+minneanslag, randtype og diskrete spalteåpninger. Disse er informasjon som
+kan åpnes ved behov, i stedet for beslutninger som kreves på startsiden.
+
+I Avansert er ønsket dt en øvre grense. Appen bruker `ceil(T/dt)` like steg
+og kan redusere dt litt for å treffe T nøyaktig. Faktisk dt og antall steg
+vises og eksporteres; ingen ekstra delvis tidssteg legges til i løseren.
+Et endret tidssteg i Sammenlikn vil derfor også endre antall steg. Dette er
+en avledet endring for å holde fysisk sluttid fast. Metoden blir ikke
+automatisk nøyaktig eller stabil bare fordi sluttiden treffes.
 
 De to siste fullførte resultatene beholdes i nettleserøkten. En ny økt eller
 omstart av serveren kan miste historikken; last ned det som skal tas vare på.
@@ -66,6 +87,10 @@ JSON-filen inneholder parametere og diagnostikk, ikke alle tetthetsbilder.
 PNG er ett valgt bilde; CSV inneholder tid, sannsynlighet og absorbert
 sannsynlighet. Faseinformasjon lagres ikke i appresultatene. Bruk
 Python-API-et med komplekse rammer når fase er nødvendig.
+
+I Sammenlikn beholdes den valgte utgangskjøringen sammen med det nye
+resultatet, også når du velger den eldste av de to. De to bildene bruker
+samme 2D-fargeskala og viser nærmeste faktisk lagrede tidspunkt.
 
 ## Numerical interpretation
 
@@ -105,6 +130,8 @@ down the server. Use the terminal to stop it.
 
 - `app.py`: portable launcher with the active interpreter and loopback binding.
 - `app_model.py`: experiment settings, validation, solver calls and exports.
+- `app_presets.py`: fixed presets, final-time fitting and controlled-change helpers.
+- `app_controls.py`: simple, comparison and advanced editing, with persistent drafts.
 - `app_jobs.py` / `app_worker.py`: subprocess lifecycle and cancellation.
 - `web_app.py`: Streamlit controls and result comparison.
 
@@ -118,7 +145,10 @@ python -m pytest -q
 Tests cover CLI/app result agreement, both 1D methods, JSON/NPZ round trips,
 geometry reporting, resource limits, real worker completion/cancellation,
 UI method selection, two-run comparison and frame scrubbing without
-recalculation. The optional UI tests skip when Streamlit is not installed.
+recalculation. Additional tests cover exact final-time fitting, the three-field
+default, settings surviving mode changes, preset resets, and preservation of
+the selected baseline when a third comparison is run.
+The optional UI tests skip when Streamlit is not installed.
 CI runs the app tests on Windows, macOS and Linux with Python 3.12.
 
 Streamlit's current [installation requirements](https://docs.streamlit.io/get-started/installation/command-line)

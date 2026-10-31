@@ -13,6 +13,9 @@ last ned et forsøksoppsett som den andre bidragsyteren kan åpne igjen:
 & '.\.venv\Scripts\python.exe' -m schroedinger.app
 ```
 
+Start med **Utforsk** og et ferdig forsøk. **Sammenlikn** lar deg endre én
+parameter ved fast sluttid; resten av innstillingene finnes i **Avansert**.
+
 ![Rettet dobbeltspaltedemo ved t = 7,03125](docs/images/double-slit.png)
 
 Gjenskap figuren med `python -m schroedinger --headless --no-progress --snapshot-time 7 --output docs/images/double-slit.png`.
