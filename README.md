@@ -68,6 +68,9 @@ storage); Python API calls retain complex states by default.
 
 ## Methods and boundaries
 
+For a worked teaching example and a detailed Norwegian explanation, see
+[From equation to simulation](docs/NUMERIKK.nb.md).
+
 | Problem | Method | Outer boundary |
 |---|---|---|
 | 1D, real static potential | Crank–Nicolson, factored tridiagonal solve | Zero Dirichlet values at ghost nodes |
@@ -94,6 +97,34 @@ Grid coordinates represent sample nodes. Sine and 1D finite-difference
 boundaries lie at neighbouring ghost nodes. Wall and slit geometry is
 rasterized, so effective dimensions change slightly with grid refinement.
 
+The internal slit wall and the outer box edges are different boundaries.
+Without absorption, Fourier packets can wrap to the opposite edge; Dirichlet
+edges reflect them. Returning waves can change the interference pattern.
+An edge absorber reduces these effects but is not an exact transparent boundary.
+`--no-absorber` removes damping, not the underlying boundary condition.
+There is no independent `--boundary` option. The revised slit solver also
+changes the outer boundary from the original periodic box to Dirichlet.
+
+### Choosing the 1D time integrator
+
+Both methods remain available with the same finite-difference spatial operator:
+
+```bash
+python -m schroedinger --dimension 1 --method crank_nicolson
+python -m schroedinger --dimension 1 --method rk4
+python examples/compare_1d_methods.py --method both
+```
+
+Crank–Nicolson (`auto` in 1D) solves a tridiagonal system. It is second order
+in time and preserves norm for the closed Hermitian problem, but large dt
+still introduces phase error. RK4 uses four explicit right-hand-side
+evaluations, is fourth order in time, has a checked stability restriction,
+and does not preserve norm exactly. Both use second-order finite differences
+in space for smooth solutions. Neither order nor stability certifies accuracy.
+No per-step renormalization is applied; choosing RK4 does not reproduce all
+the original algorithm's behavior. These options are 1D-only; 2D uses Strang
+splitting. The teaching example saves a PNG/JSON without opening a window.
+
 ## Accuracy
 
 The defaults are visualization settings, not a certified continuum solution.
@@ -110,6 +141,17 @@ These two examples end at t=16. Increasing grid resolution or frame count
 increases runtime and memory use. Packets must resolve their momentum on the
 grid; parameters beyond the Nyquist limit are rejected. Sharp slit corners
 and discontinuous finite potentials particularly need convergence checks.
+
+The [default double-slit sensitivity study](docs/SENSITIVITY.md) compares
+time steps, grids, box size and absorber parameters at a common physical time.
+Its script is reproducible and does not change demo defaults or solvers.
+The measured 512x256 and 768x384 central profiles differ by about 17% at
+the same dt (including changed raster geometry); the defaults are not
+demonstrated to be spatially converged.
+A [controlled follow-up](docs/GRID_DIFFERENCE.md) finds changed discrete
+aperture geometry to be the dominant cause of that difference. Matching
+internal boundary coordinates reduces the tested grid differences to
+around 1–3%, without certifying the intended continuum slit geometry.
 
 A Gaussian has an energy distribution. Transmission through a finite barrier
 can include both sub-barrier tunnelling and above-barrier scattering. The

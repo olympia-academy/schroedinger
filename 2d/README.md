@@ -17,6 +17,13 @@ Slit walls use unitary directional sine propagation on allowed grid intervals,
 with Dirichlet boundary values. They no longer erase amplitude after each
 Fourier step. Free and finite-potential cases retain Fourier Strang splitting.
 
+Slit cases now also have Dirichlet outer box edges, which reflect waves
+without absorption. Fourier cases have periodic outer edges, which can
+wrap waves to the opposite side. These are different finite-box models.
+The absorber reduces returning waves but is not an exact open boundary;
+`--no-absorber` does not switch boundary type. See the
+[boundary guide](../docs/NUMERIKK.nb.md) and [sensitivity study](../docs/SENSITIVITY.md).
+
 The edge absorber is optional and has a fixed decay rate per unit time.
 The animation displays remaining probability; the JSON report also records
 absorbed probability. GUI runs store float32 densities to reduce snapshot
