@@ -221,6 +221,7 @@ def controls(jobs):
                 st.session_state.pending = jobs.start(experiment)
                 st.session_state.pending_name = name
                 st.session_state.pending_base = base_id
+                st.session_state.pending_validation = None
                 st.rerun()
             except (ValueError, OSError) as exc:
                 st.error(str(exc))

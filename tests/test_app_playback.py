@@ -24,11 +24,11 @@ def test_2d_native_pixels_orientation_fixed_scale_and_physical_diagnostics(monke
     assert payload["probability"] == run.summary["probability"]
     assert payload["absorbed"] == run.summary["absorbed_probability"]
     assert len(payload["images"]) == len(run.times)
-    palette = colormaps["inferno"](np.linspace(0, 1, 256), bytes=True)[:, :3]
+    palette = colormaps["YlGnBu"](np.linspace(0, 1, 256), bytes=True)[:, :3]
     for source, density in zip(payload["images"], run.densities):
         pixels = np.array(Image.open(io.BytesIO(base64.b64decode(source.split(",")[1]))))
         assert pixels.shape == (32, 48, 3)
-        indices = np.clip(density/payload["vmax"]*255, 0, 255).astype(np.uint8)
+        indices = (np.clip(density/payload["vmax"], 0, 1)**0.5*255).astype(np.uint8)
         np.testing.assert_array_equal(pixels, np.flipud(palette[indices]))
     np.testing.assert_array_equal(run.densities, before)
     iv = run.experiment.configuration().initial_values

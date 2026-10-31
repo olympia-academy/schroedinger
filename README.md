@@ -12,8 +12,8 @@ python -m pip install -e ".[app]"
 python -m schroedinger.app
 ```
 
-Choose parameters, inspect saved frames, compare two runs, and export/reopen
-experiment settings. The existing command-line interface is documented below.
+Choose parameters, inspect saved frames, play two runs in sync, and export/reopen
+complete results or experiment settings. The existing command-line interface is documented below.
 Start with a preset in **Utforsk** (Explore), change one parameter at fixed
 final time in **Sammenlikn** (Compare), or open **Avansert** (Advanced) for
 the full controls. The app derives propagation steps from physical final time.
@@ -21,6 +21,9 @@ Play, pause, restart and change display speed for saved frames directly in
 the browser, without per-frame server calls or re-running the simulation.
 Seeking pauses playback at the chosen frame. New default runs save 91 frames;
 the default playback speed is 12 frames/s.
+The light display highlights weak patterns and keeps a shared color scale for
+comparisons. Region probabilities, 2D density profiles and guided time-step/grid
+checks help interpret results. See the [app guide](docs/APP.md) for their limits.
 
 ## Install
 

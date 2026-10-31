@@ -1,86 +1,14 @@
 """Streamlit presentation layer. Start with python -m schroedinger.app."""
-from uuid import uuid4
-
-import numpy as np
-import pandas as pd
 import streamlit as st
 
 from schroedinger.app_jobs import JobManager
-from schroedinger.app_model import frame_png
 from schroedinger.app_controls import initialize, controls
-from schroedinger.app_presets import changes
-from schroedinger.app_playback import show_player
+from schroedinger.app_results import show_results, import_results, add_entry
 
 
 @st.cache_resource
 def jobs():
     return JobManager()
-
-
-def budget_chart(run):
-    return pd.DataFrame({"P i boksen": run.summary["probability"],
-                         "Absorbert": run.summary["absorbed_probability"]},
-                        index=pd.Index(run.times, name="Fysisk tid"))
-
-
-def show_results():
-    history = st.session_state.history
-    if not history:
-        st.info("Velg et forsøk i sidepanelet og trykk Kjør simulering. Ingen beregning starter automatisk.")
-        return
-    entries = {entry["id"]: entry for entry in history}
-    if st.session_state.get("selected_run") not in entries:
-        st.session_state.pop("selected_run", None)
-    selected = st.selectbox("Vis kjøring", list(entries), index=len(entries)-1,
-                            format_func=lambda key: entries[key]["name"], key="selected_run")
-    run = entries[selected]["run"]
-    show_player(run, selected)
-    st.line_chart(budget_chart(run))
-    with st.expander("Oppsett og diskrete randkoordinater"):
-        st.json(run.metadata())
-    a, c = st.columns(2)
-    a.download_button("Last ned oppsett og rapport", run.configuration_json(), "experiment.json", "application/json")
-    c.download_button("Last ned sannsynlighetsregnskap", budget_chart(run).to_csv(), "probability.csv", "text/csv")
-    st.caption("Appen lagrer tetthet, ikke bølgefunksjonens fase. Bruk Python-API-et for faseanalyse. De to siste kjøringene beholdes i denne nettleserøkten.")
-    if len(history) == 2:
-        with st.expander("Sammenlikn de to siste kjøringene", expanded=True):
-            first, second = (entry["run"] for entry in history)
-            if first.experiment.dimension != second.experiment.dimension:
-                st.info("Velg samme dimensjon i begge kjøringer for en sammenlikning.")
-                return
-            end = min(first.times[-1], second.times[-1])
-            if st.session_state.get("comparison_time", 0) > end:
-                st.session_state.pop("comparison_time", None)
-            target = st.slider("Felles ønsket tidspunkt", 0.0, float(end), float(end), key="comparison_time")
-            vmax = None
-            frames = [int(np.argmin(abs(item.times-target))) for item in (first, second)]
-            if first.experiment.dimension == 2:
-                vmax = max(float(np.max(item.densities[frame])) for item, frame in zip((first, second), frames))
-            for column, entry, index in zip(st.columns(2), history, frames):
-                with column:
-                    item = entry["run"]
-                    st.write(entry["name"])
-                    st.image(frame_png(item, index, vmax=vmax), width="stretch")
-                    st.caption(f"Faktisk lagret tid: {item.times[index]:.6g}; dt={item.experiment.dt:g}")
-            rows = []
-            for entry in history:
-                item = entry["run"]
-                rows.append({"Kjøring": entry["name"], "Rutenett": f"{item.experiment.nx} x {item.experiment.ny}" if item.experiment.dimension == 2 else str(item.experiment.nx),
-                             "dt": item.experiment.dt, "Sluttid": float(item.times[-1]),
-                             "Ytterkant": item.summary["boundaries"]["outer"],
-                             "Spalteåpninger mellom nullpunkter": str(item.summary["boundaries"].get("opening_widths", []))})
-            st.dataframe(rows, hide_index=True)
-            differences = changes(first.experiment, second.experiment)
-            if differences:
-                st.write("Dette er endret mellom kjøringene:")
-                labels = {"slit_width": "Spaltebredde", "slit_separation": "Spalteavstand",
-                          "dt": "Faktisk tidssteg", "steps": "Antall beregningssteg",
-                          "nx": "Punkter i x", "ny": "Punkter i y", "method": "Tidsmetode",
-                          "px": "Bevegelsesmengde", "potential_strength": "Potensialstyrke"}
-                st.dataframe([{**row, "Parameter": labels.get(row["Parameter"], row["Parameter"])}
-                              for row in differences], hide_index=True)
-                st.caption("dt og antall steg kan følge med automatisk for å holde fysisk sluttid fast.")
-            st.caption("Nærmeste lagrede bilde brukes; de faktiske tidene kan avvike. Rutenettendring kan også endre spaltegeometrien. Sammenlikningen gir ikke en konvergensgaranti.")
 
 
 def main():
@@ -90,6 +18,7 @@ def main():
         st.session_state.history = []
     st.title("Schrödinger-lab")
     st.caption("Akademie Olympia · Utforsk et forsøk eller sammenlikn én endring")
+    import_results()
     preview = controls(jobs())
     if preview:
         experiment, config, details = preview
@@ -123,11 +52,9 @@ def main():
         else:
             if status["status"] == "complete":
                 run = jobs().collect(identifier)
-                entry = {"id": uuid4().hex, "name": st.session_state.pending_name, "run": run}
-                base = next((item for item in st.session_state.history
-                             if item["id"] == st.session_state.get("pending_base")), None)
-                st.session_state.history = [base, entry] if base else (st.session_state.history + [entry])[-2:]
-                st.session_state.selected_run = entry["id"]
+                add_entry(run, st.session_state.pending_name,
+                          st.session_state.get("pending_base"),
+                          st.session_state.pop("pending_validation", None))
             else:
                 st.session_state.flash = status.get("message", "Beregningen mislyktes.")
                 jobs().cancel(identifier)
@@ -135,7 +62,7 @@ def main():
             st.rerun()
 
     monitor()
-    show_results()
+    show_results(jobs())
     with st.expander("Fysikk og tolkning"):
         st.markdown("""**Periodiske ytterkanter** kan sende bølger inn igjen på motsatt side.
 **Dirichlet-ytterkanter** reflekterer bølger når absorberen er av.

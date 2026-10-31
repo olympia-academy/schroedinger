@@ -5,8 +5,8 @@
 Numeriske kvantesimuleringer for fysikk, forskning og undervisning.
 
 Den valgfrie [lokale nettappen](docs/APP.md) virker på Windows, macOS og Linux
-med Python 3.11+. Velg parametere i nettleseren, sammenlikn to kjøringer og
-last ned et forsøksoppsett som den andre bidragsyteren kan åpne igjen:
+med Python 3.11+. Velg parametere i nettleseren, spill av to kjøringer sammen
+og lagre komplette resultater som den andre bidragsyteren kan åpne uten ny beregning:
 
 ```powershell
 & '.\.venv\Scripts\python.exe' -m pip install -e ".[app]"
@@ -17,6 +17,9 @@ Start med **Utforsk** og et ferdig forsøk. **Sammenlikn** lar deg endre én
 parameter ved fast sluttid; resten av innstillingene finnes i **Avansert**.
 Ferdige kjøringer kan spilles av, pauses og startes på nytt med valgfri
 visningshastighet, uten ny beregning.
+Lys visning fremhever svake mønstre; sammenlikning bruker felles fargeskala.
+Regionandeler, tetthetsprofiler og veiledet kontroll av tidssteg/rutenett hjelper
+med vurderingen. [Appveiledningen](docs/APP.md) forklarer målingene og begrensningene.
 
 ![Rettet dobbeltspaltedemo ved t = 7,03125](docs/images/double-slit.png)
 

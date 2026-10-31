@@ -73,7 +73,10 @@ def test_run_and_single_parameter_comparison_keep_time_and_baseline():
     assert first["id"] == entry["id"]
     assert second["run"].experiment.slit_width == 0.8
     assert first["run"].times[-1] == second["run"].times[-1]
-    assert app.slider(key="comparison_time").value == first["run"].times[-1]
+    payload = app.session_state["player_payload"]
+    assert len(payload["runs"]) == 2
+    assert payload["times"][-1] == first["run"].times[-1]
+    assert payload["runs"][0]["vmax"] == payload["runs"][1]["vmax"]
     assert len(app.dataframe) == 2
     app.selectbox(key="comparison_base").set_value(first["id"]).run()
     app.number_input(key=f"one_{first['id']}_slit_width").set_value(1.0).run()
@@ -120,6 +123,50 @@ def test_browser_player_payload_is_cached_without_starting_a_new_worker(monkeypa
     assert not app.exception
     assert app.session_state["player_payload"] is prepared
     assert prepared["times"] == entry["run"].times.tolist()
-    assert len(prepared["images"]) == len(entry["run"].times)
+    assert len(prepared["runs"][0]["images"]) == len(entry["run"].times)
     assert app.session_state["history"][0]["id"] == entry["id"]
     assert not app.session_state.get("pending")
+
+@pytest.mark.parametrize("kind", ["dt", "grid"])
+def test_guided_check_runs_only_on_click_and_keeps_the_baseline(kind):
+    app = AppTest.from_file(str(APP)).run(timeout=15)
+    small_run(app)
+    base = app.session_state["history"][0]
+    app.selectbox(key="refinement_kind").set_value("grid").run()
+    assert not app.session_state.get("pending")
+    app.selectbox(key="refinement_kind").set_value(kind).run()
+    app.button(key="run_refinement").click().run(timeout=15)
+    wait_for_runs(app, 2)
+    first, refined = app.session_state["history"]
+    assert first["id"] == base["id"]
+    if kind == "dt":
+        assert refined["run"].experiment.dt == first["run"].experiment.dt/2
+    else:
+        assert refined["run"].experiment.nx == first["run"].experiment.nx*2
+    assert refined["run"].times[-1] == first["run"].times[-1]
+    assert refined["validation"]["base"] == first["id"]
+    assert len(app.session_state["player_payload"]["runs"]) == 2
+    assert any("Tetthetsforskjell" in item.value for item in app.markdown)
+    app.toggle(key="sync_compare").set_value(False).run()
+    assert len(app.session_state["player_payload"]["runs"]) == 1
+
+
+def test_display_changes_preserve_densities_and_export_can_reopen(monkeypatch):
+    import io
+    from schroedinger.app_model import read_result
+    from schroedinger.app_jobs import JobManager
+    app = AppTest.from_file(str(APP)).run(timeout=15)
+    small_run(app)
+    run = app.session_state["history"][0]["run"]
+    def forbidden(*args, **kwargs):
+        pytest.fail("Display/export must not start a worker")
+    monkeypatch.setattr(JobManager, "start", forbidden)
+    app.checkbox(key="display_emphasis").uncheck().run()
+    assert app.session_state["player_payload"]["runs"][0]["gamma"] == 1
+    app.radio(key="display_colors").set_value("Mørk").run()
+    assert app.session_state["history"][0]["run"] is run
+    app.button(key="prepare_export").click().run(timeout=15)
+    assert not app.exception
+    loaded = read_result(io.BytesIO(app.session_state["result_export"][1]))
+    assert loaded.experiment == run.experiment
+    assert loaded.summary == run.summary

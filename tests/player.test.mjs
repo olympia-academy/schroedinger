@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { advanceFrame, PlaybackClock } from "../src/schroedinger/player.mjs";
+import { advanceFrame, PlaybackClock, colorValue, axisTicks } from "../src/schroedinger/player.mjs";
 
 test("elapsed clock retains fractional time and clamps at last saved frame", () => {
   const next = advanceFrame(0, 10000, 10600, 4, 10);
@@ -54,4 +54,11 @@ test("invalid rates and empty playback are rejected", () => {
     assert.throws(() => advanceFrame(0, 0, 1000, fps, 10));
   }
   assert.throws(() => new PlaybackClock(0));
+});
+
+test("colorbar inverts gamma and axis ticks keep physical values", () => {
+  assert.equal(colorValue(0.5, 8, 0.5), 2);
+  assert.equal(colorValue(0.5, 8, 1), 4);
+  assert.deepEqual(axisTicks(-15.039, 24.961), [-10, 0, 10, 20]);
+  assert.deepEqual(axisTicks(0, 0.02), [0, 0.005, 0.01, 0.015, 0.02]);
 });

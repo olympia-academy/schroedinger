@@ -3,6 +3,8 @@ from dataclasses import asdict, dataclass, fields
 import io
 import json
 import platform
+import math
+from zipfile import ZipFile, BadZipFile
 
 from matplotlib.figure import Figure
 import numpy as np
@@ -145,8 +147,8 @@ def boundary_details(config, mask):
         bounds = [[iv.y_grid[start-1] if start else iv.y_min-iv.dy,
                    iv.y_grid[stop] if stop < iv.ny else iv.y_max]
                   for start, stop in edges.reshape(-1, 2)]
-        result["opening_zero_nodes"] = bounds
-        result["opening_widths"] = [hi-lo for lo, hi in bounds]
+        result["opening_zero_nodes"] = [[float(lo), float(hi)] for lo, hi in bounds]
+        result["opening_widths"] = [float(hi-lo) for lo, hi in bounds]
     return result
 
 
@@ -185,9 +187,64 @@ def write_result(run, path):
 
 
 def read_result(path):
-    with np.load(path, allow_pickle=False) as data:
-        payload = json.loads(str(data["metadata"]))
-        return RunData(Experiment(**payload["experiment"]), data["densities"].copy(), payload["result"])
+    """Read the portable format, bounding decompression before allocating arrays."""
+    try:
+        with ZipFile(path) as archive:
+            if sorted(archive.namelist()) != ["densities.npy", "metadata.npy"]:
+                raise ValueError("Resultatfilen må inneholde tettheter og metadata.")
+            if archive.getinfo("metadata.npy").file_size > 1024**2:
+                raise ValueError("Resultatfilens metadata er for store.")
+            with archive.open("metadata.npy") as stream:
+                version = np.lib.format.read_magic(stream)
+                if version not in {(1, 0), (2, 0)}:
+                    raise ValueError("Ukjent metadataformat.")
+                reader = (np.lib.format.read_array_header_1_0 if version == (1, 0)
+                          else np.lib.format.read_array_header_2_0)
+                shape, _, dtype = reader(stream)
+                if (shape != () or dtype.kind != "U" or dtype.itemsize > 1024**2
+                        or stream.tell()+dtype.itemsize != archive.getinfo("metadata.npy").file_size):
+                    raise ValueError("Ugyldige metadata.")
+            metadata = str(np.load(io.BytesIO(archive.read("metadata.npy")), allow_pickle=False))
+            experiment = Experiment.read(metadata)
+            payload = json.loads(metadata)
+            with archive.open("densities.npy") as stream:
+                version = np.lib.format.read_magic(stream)
+                if version not in {(1, 0), (2, 0)}:
+                    raise ValueError("Ukjent tetthetsformat.")
+                reader = (np.lib.format.read_array_header_1_0 if version == (1, 0)
+                          else np.lib.format.read_array_header_2_0)
+                shape, _, dtype = reader(stream)
+                size = math.prod(shape)*dtype.itemsize
+                expected = ((experiment.ny, experiment.nx) if experiment.dimension == 2
+                            else (experiment.nx,))
+                if (len(shape) != len(expected)+1 or shape[1:] != expected
+                        or not 2 <= shape[0] <= 121 or dtype.kind != "f" or dtype.itemsize != 4
+                        or size > 128*1024**2
+                        or archive.getinfo("densities.npy").file_size != stream.tell()+size):
+                    raise ValueError("Ugyldige tettheter eller mer enn 128 MiB resultatdata.")
+            densities = np.load(io.BytesIO(archive.read("densities.npy")), allow_pickle=False)
+        summary = payload["result"]
+        times = np.asarray(summary["times"], dtype=float)
+        probability = np.asarray(summary["probability"], dtype=float)
+        absorbed = np.asarray(summary["absorbed_probability"], dtype=float)
+        if (any(values.shape != (len(densities),) or not np.isfinite(values).all()
+                for values in (times, probability, absorbed))
+                or not (np.diff(times) > 0).all() or times[0] != 0
+                or not np.isclose(times[-1], experiment.steps*experiment.dt, rtol=1e-12, atol=1e-12)
+                or not np.isfinite(densities).all() or (densities < 0).any()
+                or (probability < 0).any() or (absorbed < 0).any()):
+            raise ValueError("Ugyldige tider, tettheter eller sannsynligheter.")
+        config = experiment.configuration()
+        norms = densities.sum(axis=tuple(range(1, densities.ndim)), dtype=np.float64)*config.cell_volume
+        if not np.allclose(norms, probability, rtol=1e-5, atol=2e-6):
+            raise ValueError("Tetthetene stemmer ikke med sannsynlighetsregnskapet.")
+        summary["boundaries"] = boundary_details(config, get_barrier_mask(config))
+        summary["max_probability_budget_error"] = float(np.max(abs(probability+absorbed-probability[0])))
+        if not isinstance(summary["solver"], str):
+            raise ValueError("Ugyldig løsernavn.")
+        return RunData(experiment, densities, summary)
+    except (BadZipFile, KeyError, TypeError, OverflowError, EOFError) as exc:
+        raise ValueError("Filen er ikke et gyldig Schrödinger-resultat.") from exc
 
 
 def frame_png(run, frame, vmax=None):
