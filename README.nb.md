@@ -43,6 +43,22 @@ Bruk Pause/Play, Restart og glidebryteren for bilder i animasjonen. Tittelen
 viser fysisk tid og samlet sannsynlighet som er igjen i simuleringsområdet.
 Lukk vinduet for å avslutte.
 
+### Lavbelastningsmodus på Windows
+
+Kjør ett simuleringsvindu om gangen. Dobbeltklikk `start-low-load.cmd`, eller
+kjør følgende fra prosjektmappen:
+
+```powershell
+& '.\.venv\Scripts\python.exe' tools/view_low_load.py
+```
+
+Denne starter den rettede 2D-demoen med lav prosessprioritet, én CPU og
+avspillingen pauset. Trykk **Play** når du er klar. Fysiske parametere,
+rutenett og tidssteg er de samme; bare prosess- og visningsinnstillinger
+endres. Under lokal Windows-testing ble PC-en treg med samtidige fulle
+GUI-kjøringer og normal igjen da simuleringene ble stoppet. Den nøyaktige
+flaskehalsen er foreløpig ikke fastslått.
+
 Parametere kan endres i kommandoen, for eksempel `--slit-width 0.8`,
 `--px 15`, `--dt 0.01` og `--nx 1024`. Kildekoden trenger ikke endres.
 
@@ -86,3 +102,12 @@ er derfor sigma/2.
 Se [den engelske dokumentasjonen](README.md) for metoder, randbetingelser,
 Python-API og flere presiseringer. Se [valideringen](docs/VALIDATION.md) for
 testgrunnlaget og sammenlikningen med originalversjonen.
+
+## Medforfattere og opprinnelse
+
+Det opprinnelige 1D-prosjektet ble utviklet av medforfatterne
+[Dag-Morten Sjøstrøm (@dagmortensj)](https://github.com/dagmortensj) og
+[Dag-Vidar Krogstad Bauer (@dagvidb)](https://github.com/dagvidb), med utgangspunkt i
+Benjamin J. Lands [Quantum mechanics simulation](https://ben.land/post/2022/03/09/quantum-mechanics-simulation/).
+Den opprinnelige 2D-utvidelsen ble senere utviklet med en KI-basert
+programmeringsassistent. Den videre utviklingen skjer i Akademie Olympia.

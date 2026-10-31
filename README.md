@@ -44,6 +44,25 @@ The title shows physical time and the probability remaining in the box.
 Closing the window ends the program. Parameters are command-line options;
 editing source files is unnecessary.
 
+### Low-load playback on Windows
+
+Run one simulation window at a time. To use the same corrected 2D experiment
+with lower process priority, one CPU and playback paused on opening:
+
+```powershell
+& '.\.venv\Scripts\python.exe' tools/view_low_load.py
+```
+
+Alternatively, double-click `start-low-load.cmd` after installation.
+Press **Play** when ready. This changes scheduling and display settings,
+not the physical parameters, grid or time step. It also uses a smaller
+display and an 80 ms playback interval.
+
+Concurrent full-size GUI runs caused desktop stuttering during local Windows
+testing; responsiveness returned after stopping the simulations. The exact
+bottleneck was not established. This launcher is an option to reduce load,
+not a claim that it fixes every source of desktop stuttering.
+
 For output without opening a window:
 
 ```bash
@@ -150,9 +169,11 @@ The old `1d/main.py` and `2d/main.py` entry points remain usable after
 installation, with the same CLI options. Their helper modules are compatibility
 wrappers around the shared package in `src/schroedinger/`.
 
-## Origins
+## Authors and origins
 
-The original 1D project was written by Dag-Morten and a friend, based on
+The original 1D project was co-authored by
+[Dag-Morten Sjøstrøm (@dagmortensj)](https://github.com/dagmortensj) and
+[Dag-Vidar Krogstad Bauer (@dagvidb)](https://github.com/dagvidb), based on
 Benjamin J. Land's [Quantum mechanics simulation](https://ben.land/post/2022/03/09/quantum-mechanics-simulation/).
 The original 2D extension was developed with an AI coding assistant. This
 revision adds validated propagators, shared configuration, diagnostics,
