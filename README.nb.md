@@ -113,6 +113,10 @@ og [følsomhetsundersøkelsen](docs/SENSITIVITY.md).
 Der endret den målte sentrale profilen seg med omtrent 17 % mellom
 512×256 og 768×384 ved samme dt, inkludert endret rastergeometri.
 Standardinnstillingene er derfor ikke dokumentert romlig konvergert.
+[Kontrollerte forsøk](docs/GRID_DIFFERENCE.md) peker på endret diskret
+spaltegeometri som hovedårsak. Med de interne randkoordinatene holdt fast
+blir de undersøkte forskjellene rundt 1–3%, uten at dette sertifiserer
+den tiltenkte kontinuerlige geometrien.
 
 Gaussbredden beholder den opprinnelige definisjonen:
 psi er proporsjonal med exp(-((x-x0)/sigma)^2). Standardavviket i posisjon

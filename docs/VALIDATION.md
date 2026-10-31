@@ -62,6 +62,12 @@ with a runnable script and committed data. The
 [Norwegian numerical guide](NUMERIKK.nb.md) explains their physical effects
 and the difference between Crank–Nicolson and RK4.
 
+A [controlled attribution study](GRID_DIFFERENCE.md) then separates aperture
+geometry, directional resolution, dt and profile resampling. Changed
+discrete geometry is the dominant mechanism for that 17.30% comparison;
+matched internal-boundary refinements reduce the tested differences to
+around 1–3%. Its seven new cases retain probability budgets within 1.5e-12.
+
 - Hard-wall kinetic evolution uses sine transforms on connected grid intervals.
   Ghost-node Dirichlet boundaries and rasterized geometry are part of the model.
 - Directional splitting at corners has finite time error. Refine dt and grid

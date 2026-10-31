@@ -205,3 +205,9 @@ Hele undersøkelsen tar lengre tid enn én demonstrasjon.
 Se [måleoppsett, resultater og begrensninger](SENSITIVITY.md).
 Undersøkelsen gjelder et tidlig øyeblikksbilde, ikke alle senere tider eller
 andre bølgepakker. Testene erstatter ikke en slik følsomhetsundersøkelse.
+
+[Oppfølgingsforsøkene](GRID_DIFFERENCE.md) viser hvorfor det opprinnelige
+profilavviket var så stort: rutenettene representerte ulike spalteåpninger.
+På samme finere rutenett gir de to geometriene omtrent 19,9% forskjell.
+Med samme interne randkoordinater er de undersøkte forskjellene rundt
+1–3%. Det er derfor viktig å skille romoppløsning fra endret geometri.

@@ -148,6 +148,10 @@ Its script is reproducible and does not change demo defaults or solvers.
 The measured 512x256 and 768x384 central profiles differ by about 17% at
 the same dt (including changed raster geometry); the defaults are not
 demonstrated to be spatially converged.
+A [controlled follow-up](docs/GRID_DIFFERENCE.md) finds changed discrete
+aperture geometry to be the dominant cause of that difference. Matching
+internal boundary coordinates reduces the tested grid differences to
+around 1–3%, without certifying the intended continuum slit geometry.
 
 A Gaussian has an energy distribution. Transmission through a finite barrier
 can include both sub-barrier tunnelling and above-barrier scattering. The

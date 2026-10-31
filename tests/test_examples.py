@@ -60,3 +60,31 @@ def test_screen_comparison_removes_uniform_y_normalization_and_keeps_region_fixe
         assert incident == pytest.approx(1/length_y)
         profiles.append(profile)
     assert np.allclose(profiles[0], profiles[1], atol=1e-12)
+
+
+def test_attribution_masks_preserve_measured_boundary_nodes(monkeypatch):
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[1] / "examples"))
+    study = example("explain_grid_difference")
+    geometries = []
+    common = study.configuration({"nx": 512, "ny": 768})
+    for nx, ny, expected_width in ((512, 256, 0.703125), (768, 384, 0.625)):
+        original = study.configuration({"nx": nx, "ny": ny})
+        geometry = study.boundary_geometry(original, study.get_barrier_mask(original))
+        assert geometry["opening_widths"] == pytest.approx([expected_width]*2)
+        mask = study.matched_mask(common, geometry)
+        measured = study.boundary_geometry(common, mask)
+        assert np.allclose(measured["opening_bounds"], geometry["opening_bounds"], atol=1e-12)
+        assert np.allclose(measured["wall_faces"], geometry["wall_faces"], atol=1e-12)
+        geometries.append(geometry)
+    # Different node-count widths do not imply different x boundary faces.
+    assert np.allclose(geometries[0]["wall_faces"], geometries[1]["wall_faces"])
+
+
+def test_attribution_rejects_unrepresentable_boundary_coordinates(monkeypatch):
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[1] / "examples"))
+    study = example("explain_grid_difference")
+    coarse = study.configuration({"nx": 512, "ny": 256})
+    geometry = study.boundary_geometry(coarse, study.get_barrier_mask(coarse))
+    incompatible = study.configuration({"nx": 768, "ny": 384})
+    with pytest.raises(ValueError, match="opening boundary"):
+        study.matched_mask(incompatible, geometry)

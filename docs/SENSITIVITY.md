@@ -6,6 +6,12 @@ profile by 17.30% in the L1 measure below. Reducing dt has a much smaller
 effect for this particular observable and time. No solver or demo defaults
 were changed as a result of this study.
 
+The [controlled follow-up](GRID_DIFFERENCE.md) identifies changed discrete
+aperture geometry as the dominant explanation: the two measured geometries
+produce 19.94% profile difference on the same grid, while the tested
+matched-geometry refinements differ by around 1–3%. This does not certify
+the nominal continuum geometry or late-time behavior.
+
 Norsk: Standardbildet er fortsatt en kvalitativ demonstrasjon. Normbevaring
 og små tidsfeil er ikke tilstrekkelig til å dokumentere et konvergert
 interferensmønster. Se [den norske veiledningen](NUMERIKK.nb.md).
