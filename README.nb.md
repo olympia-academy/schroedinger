@@ -4,6 +4,23 @@
 
 Numeriske kvantesimuleringer for fysikk, forskning og undervisning.
 
+Den valgfrie [lokale nettappen](docs/APP.md) virker på Windows, macOS og Linux
+med Python 3.11+. Velg parametere i nettleseren, spill av to kjøringer sammen
+og lagre komplette resultater som den andre bidragsyteren kan åpne uten ny beregning:
+
+```powershell
+& '.\.venv\Scripts\python.exe' -m pip install -e ".[app]"
+& '.\.venv\Scripts\python.exe' -m schroedinger.app
+```
+
+Start med **Utforsk** og et ferdig forsøk. **Sammenlikn** lar deg endre én
+parameter ved fast sluttid; resten av innstillingene finnes i **Avansert**.
+Ferdige kjøringer kan spilles av, pauses og startes på nytt med valgfri
+visningshastighet, uten ny beregning.
+Lys visning fremhever svake mønstre; sammenlikning bruker felles fargeskala.
+Regionandeler, tetthetsprofiler og veiledet kontroll av tidssteg/rutenett hjelper
+med vurderingen. [Appveiledningen](docs/APP.md) forklarer målingene og begrensningene.
+
 ![Rettet dobbeltspaltedemo ved t = 7,03125](docs/images/double-slit.png)
 
 Gjenskap figuren med `python -m schroedinger --headless --no-progress --snapshot-time 7 --output docs/images/double-slit.png`.

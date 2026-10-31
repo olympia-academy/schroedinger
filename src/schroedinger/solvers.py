@@ -81,12 +81,14 @@ def absorbing_rate(config):
     return rate
 
 
-def simulate(psi, v=0, config=None, barrier_mask=None):
+def simulate(psi, v=0, config=None, barrier_mask=None, *, progress_callback=None):
     """Return saved frames, times, norms and the probability absorbed at edges.
 
     Hard walls use directional sine propagation; finite 2D potentials use
     Fourier propagation. 1D defaults to Crank-Nicolson, with RK4 available
     for comparison. The initial state is normalized once, never in the loop.
+    Optional progress_callback(completed_steps, total_steps) reports actual
+    completed steps, including zero and the final step, without changing states.
     """
     if config is None:
         config = Config1D() if np.ndim(psi) == 1 else Config2D()
@@ -157,6 +159,8 @@ def simulate(psi, v=0, config=None, barrier_mask=None):
         return state, max(0.0, removed)
 
     save(0)
+    if progress_callback is not None:
+        progress_callback(0, sp.steps)
     for step in tqdm(range(1, sp.steps+1), desc=f"{config.dimension}D Schrodinger", disable=not sp.progress):
         if damping is not None:
             psi, lost = damp(psi)
@@ -167,6 +171,8 @@ def simulate(psi, v=0, config=None, barrier_mask=None):
             absorbed += lost
         if step % sp.save_every == 0 or step == sp.steps:
             save(step)
+        if progress_callback is not None:
+            progress_callback(step, sp.steps)
 
     return SimulationResult(frames, np.asarray(times), np.asarray(norms),
                             np.asarray(losses), sp.store_density, solver, projection_loss)

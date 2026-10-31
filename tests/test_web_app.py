@@ -1,0 +1,194 @@
+"""Optional UI tests: simple controls and reproducible controlled comparisons."""
+from pathlib import Path
+import time
+
+import pytest
+
+pytest.importorskip("streamlit")
+from streamlit.testing.v1 import AppTest
+
+APP = Path(__file__).resolve().parents[1]/"src"/"schroedinger"/"web_app.py"
+
+
+def wait_for_runs(app, count):
+    deadline = time.monotonic()+25
+    while len(app.session_state["history"]) < count and time.monotonic() < deadline:
+        time.sleep(0.1)
+        app.run(timeout=15)
+        assert not app.exception
+    assert len(app.session_state["history"]) == count
+
+
+def start(app):
+    next(button for button in app.button if button.label == "Kjør simulering").click().run(timeout=15)
+    assert not app.exception
+
+
+def small_run(app):
+    app.radio(key="work_mode").set_value("Avansert").run()
+    app.number_input(key="edit_nx").set_value(48)
+    app.number_input(key="edit_ny").set_value(32)
+    app.number_input(key="edit_px").set_value(2.0)
+    app.number_input(key="edit_frames").set_value(3)
+    app.number_input(key="edit_final_time").set_value(0.1171875)
+    start(app)
+    wait_for_runs(app, 1)
+
+
+def test_simple_page_presets_and_advanced_settings_are_preserved():
+    app = AppTest.from_file(str(APP)).run(timeout=15)
+    assert not app.exception
+    assert app.session_state["history"] == []
+    assert len(app.number_input) == 3
+    assert {item.key for item in app.number_input} == {"edit_slit_width", "edit_slit_separation", "edit_final_time"}
+    app.radio(key="work_mode").set_value("Avansert").run()
+    app.number_input(key="edit_mass").set_value(12.0).run()
+    app.radio(key="work_mode").set_value("Utforsk").run()
+    assert app.session_state["draft"]["mass"] == 12.0
+    assert not app.session_state.get("pending")
+    app.radio(key="work_mode").set_value("Avansert").run()
+    assert app.number_input(key="edit_mass").value == 12.0
+    app.selectbox(key="preset_key").set_value("tunneling").run()
+    assert not app.exception
+    assert app.selectbox(key="edit_method").options == ["crank_nicolson", "rk4", "auto"]
+    app.selectbox(key="edit_method").set_value("rk4").run()
+    assert app.session_state["history"] == []
+
+
+def test_run_and_single_parameter_comparison_keep_time_and_baseline():
+    app = AppTest.from_file(str(APP)).run(timeout=15)
+    small_run(app)
+    entry = app.session_state["history"][0]
+    assert app.session_state["player_payload"]["id"] == entry["id"]
+    app.run(timeout=15)
+    assert not app.exception
+    assert not app.session_state.get("pending")
+    app.radio(key="work_mode").set_value("Sammenlikn").run()
+    app.number_input(key=f"one_{entry['id']}_slit_width").set_value(0.8).run()
+    assert len(app.session_state["history"]) == 1
+    assert entry["run"].experiment.slit_width == 0.6
+    start(app)
+    wait_for_runs(app, 2)
+    first, second = app.session_state["history"]
+    assert first["id"] == entry["id"]
+    assert second["run"].experiment.slit_width == 0.8
+    assert first["run"].times[-1] == second["run"].times[-1]
+    payload = app.session_state["player_payload"]
+    assert len(payload["runs"]) == 2
+    assert payload["times"][-1] == first["run"].times[-1]
+    assert payload["runs"][0]["vmax"] == payload["runs"][1]["vmax"]
+    assert len(app.dataframe) == 2
+    app.selectbox(key="comparison_base").set_value(first["id"]).run()
+    app.number_input(key=f"one_{first['id']}_slit_width").set_value(1.0).run()
+    previous_id = second["id"]
+    start(app)
+    deadline = time.monotonic()+25
+    while app.session_state["history"][-1]["id"] == previous_id and time.monotonic() < deadline:
+        time.sleep(0.1)
+        app.run(timeout=15)
+        assert not app.exception
+    assert app.session_state["history"][0]["id"] == first["id"]
+    assert app.session_state["history"][-1]["run"].experiment.slit_width == 1.0
+
+
+def test_compare_without_a_run_and_cancel_long_worker():
+    app = AppTest.from_file(str(APP)).run(timeout=15)
+    app.radio(key="work_mode").set_value("Sammenlikn").run()
+    assert not app.exception
+    assert not any(button.label == "Kjør simulering" for button in app.button)
+    app.radio(key="work_mode").set_value("Avansert").run()
+    app.number_input(key="edit_final_time").set_value(3906.25)
+    app.number_input(key="edit_frames").set_value(2)
+    start(app)
+    assert app.session_state["pending"]
+    app.button(key="cancel_job").click().run(timeout=15)
+    assert not app.exception
+    assert not app.session_state.get("pending")
+    assert app.session_state["history"] == []
+
+
+def test_browser_player_payload_is_cached_without_starting_a_new_worker(monkeypatch):
+    from schroedinger.app_jobs import JobManager
+    app = AppTest.from_file(str(APP)).run(timeout=15)
+    small_run(app)
+    entry = app.session_state["history"][0]
+    prepared = app.session_state["player_payload"]
+
+    def unexpected_worker(*args, **kwargs):
+        pytest.fail("Playback must use saved frames, not start a simulation")
+    monkeypatch.setattr(JobManager, "start", unexpected_worker)
+    from schroedinger import app_playback
+    monkeypatch.setattr(app_playback, "prepare_player", unexpected_worker)
+    app.run(timeout=15)
+    assert not app.exception
+    assert app.session_state["player_payload"] is prepared
+    assert prepared["times"] == entry["run"].times.tolist()
+    assert len(prepared["runs"][0]["images"]) == len(entry["run"].times)
+    assert app.session_state["history"][0]["id"] == entry["id"]
+    assert not app.session_state.get("pending")
+
+@pytest.mark.parametrize("kind", ["dt", "grid"])
+def test_guided_check_runs_only_on_click_and_keeps_the_baseline(kind):
+    app = AppTest.from_file(str(APP)).run(timeout=15)
+    small_run(app)
+    base = app.session_state["history"][0]
+    app.selectbox(key="refinement_kind").set_value("grid").run()
+    assert not app.session_state.get("pending")
+    app.selectbox(key="refinement_kind").set_value(kind).run()
+    app.button(key="run_refinement").click().run(timeout=15)
+    wait_for_runs(app, 2)
+    first, refined = app.session_state["history"]
+    assert first["id"] == base["id"]
+    if kind == "dt":
+        assert refined["run"].experiment.dt == first["run"].experiment.dt/2
+    else:
+        assert refined["run"].experiment.nx == first["run"].experiment.nx*2
+    assert refined["run"].times[-1] == first["run"].times[-1]
+    assert refined["validation"]["base"] == first["id"]
+    assert len(app.session_state["player_payload"]["runs"]) == 2
+    assert any("Tetthetsforskjell" in item.value for item in app.markdown)
+    app.toggle(key="sync_compare").set_value(False).run()
+    assert len(app.session_state["player_payload"]["runs"]) == 1
+
+
+def test_display_changes_preserve_densities_and_export_can_reopen(monkeypatch):
+    import io
+    from schroedinger.app_model import read_result
+    from schroedinger.app_jobs import JobManager
+    app = AppTest.from_file(str(APP)).run(timeout=15)
+    small_run(app)
+    run = app.session_state["history"][0]["run"]
+    def forbidden(*args, **kwargs):
+        pytest.fail("Display/export must not start a worker")
+    monkeypatch.setattr(JobManager, "start", forbidden)
+    app.checkbox(key="display_emphasis").uncheck().run()
+    assert app.session_state["player_payload"]["runs"][0]["gamma"] == 1
+    app.radio(key="display_colors").set_value("Mørk").run()
+    assert app.session_state["history"][0]["run"] is run
+    app.button(key="prepare_export").click().run(timeout=15)
+    assert not app.exception
+    loaded = read_result(io.BytesIO(app.session_state["result_export"][1]))
+    assert loaded.experiment == run.experiment
+    assert loaded.summary == run.summary
+
+def test_progress_bar_shows_actual_completion_and_saving_phase(monkeypatch):
+    from schroedinger.app_jobs import JobManager
+    snapshot = {"status": "running", "completed_steps": 0, "total_steps": 100, "stage": "starting"}
+    monkeypatch.setattr(JobManager, "status", lambda self, identifier: snapshot)
+    app = AppTest.from_file(str(APP)).run(timeout=15)
+    app.session_state["pending"] = "progress-test"
+    app.run(timeout=15)
+    assert not app.exception
+    assert app.get("progress")[0].proto.value == 0
+    assert app.get("progress")[0].proto.text == "Starter beregningen …"
+    snapshot.update(completed_steps=37, stage="computing")
+    app.run(timeout=15)
+    assert app.get("progress")[0].proto.value == 37
+    assert "37%" in app.get("progress")[0].proto.text
+    snapshot.update(completed_steps=100, stage="saving")
+    app.run(timeout=15)
+    assert app.get("progress")[0].proto.value == 100
+    assert "lagrer resultat" in app.get("progress")[0].proto.text
+    app.button(key="cancel_job").click().run(timeout=15)
+    assert not app.session_state.get("pending")
+    assert not app.get("progress")

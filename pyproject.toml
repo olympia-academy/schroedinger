@@ -12,12 +12,17 @@ dependencies = ["numpy>=1.26", "scipy>=1.11", "matplotlib>=3.8", "tqdm>=4.66"]
 
 [project.optional-dependencies]
 test = ["pytest>=8"]
+app = ["streamlit>=1.66.1,<2"]
 
 [project.scripts]
 schroedinger = "schroedinger.cli:entrypoint"
+schroedinger-app = "schroedinger.app:entrypoint"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+schroedinger = ["player.mjs"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
