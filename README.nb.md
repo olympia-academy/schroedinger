@@ -4,6 +4,15 @@
 
 Numeriske kvantesimuleringer for fysikk, forskning og undervisning.
 
+Den valgfrie [lokale nettappen](docs/APP.md) virker på Windows, macOS og Linux
+med Python 3.11+. Velg parametere i nettleseren, sammenlikn to kjøringer og
+last ned et forsøksoppsett som den andre bidragsyteren kan åpne igjen:
+
+```powershell
+& '.\.venv\Scripts\python.exe' -m pip install -e ".[app]"
+& '.\.venv\Scripts\python.exe' -m schroedinger.app
+```
+
 ![Rettet dobbeltspaltedemo ved t = 7,03125](docs/images/double-slit.png)
 
 Gjenskap figuren med `python -m schroedinger --headless --no-progress --snapshot-time 7 --output docs/images/double-slit.png`.

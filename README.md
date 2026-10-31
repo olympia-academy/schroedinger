@@ -4,6 +4,17 @@
 
 Interactive numerical quantum mechanics for physics, research and education.
 
+Prefer an experiment panel in your browser? The optional
+[local app](docs/APP.md) supports Windows, macOS and Linux (Python 3.11+):
+
+```bash
+python -m pip install -e ".[app]"
+python -m schroedinger.app
+```
+
+Choose parameters, inspect saved frames, compare two runs, and export/reopen
+experiment settings. The existing command-line interface is documented below.
+
 ## Install
 
 Python 3.10 or later:
