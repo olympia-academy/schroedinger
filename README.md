@@ -17,6 +17,8 @@ experiment settings. The existing command-line interface is documented below.
 Start with a preset in **Utforsk** (Explore), change one parameter at fixed
 final time in **Sammenlikn** (Compare), or open **Avansert** (Advanced) for
 the full controls. The app derives propagation steps from physical final time.
+Play, pause, restart and change display speed for saved frames without
+re-running the simulation. Seeking pauses playback at the chosen frame.
 
 ## Install
 

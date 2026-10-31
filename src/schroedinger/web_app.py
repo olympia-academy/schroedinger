@@ -9,6 +9,7 @@ from schroedinger.app_jobs import JobManager
 from schroedinger.app_model import frame_png
 from schroedinger.app_controls import initialize, controls
 from schroedinger.app_presets import changes
+from schroedinger.app_playback import show_player
 
 
 @st.cache_resource
@@ -33,23 +34,12 @@ def show_results():
     selected = st.selectbox("Vis kjøring", list(entries), index=len(entries)-1,
                             format_func=lambda key: entries[key]["name"], key="selected_run")
     run = entries[selected]["run"]
-    frame = st.slider("Lagret tidssteg", 0, len(run.times)-1, len(run.times)-1, key=f"frame_{selected}")
-    left, right = st.columns([2, 1])
-    with left:
-        image = frame_png(run, frame)
-        st.image(image, width="stretch")
-    with right:
-        st.metric("Fysisk tid", f"{run.times[frame]:.6g}")
-        st.metric("Sannsynlighet i boksen", f"{run.summary['probability'][frame]:.6f}")
-        st.metric("Absorbert sannsynlighet", f"{run.summary['absorbed_probability'][frame]:.6f}")
-        st.caption(f"Metode: {run.summary['solver']}")
-        st.caption(f"Maks regnskapsavvik: {run.summary['max_probability_budget_error']:.2e}")
+    show_player(run, selected)
     st.line_chart(budget_chart(run))
     with st.expander("Oppsett og diskrete randkoordinater"):
         st.json(run.metadata())
-    a, b, c = st.columns(3)
+    a, c = st.columns(2)
     a.download_button("Last ned oppsett og rapport", run.configuration_json(), "experiment.json", "application/json")
-    b.download_button("Last ned bildet", image, "snapshot.png", "image/png")
     c.download_button("Last ned sannsynlighetsregnskap", budget_chart(run).to_csv(), "probability.csv", "text/csv")
     st.caption("Appen lagrer tetthet, ikke bølgefunksjonens fase. Bruk Python-API-et for faseanalyse. De to siste kjøringene beholdes i denne nettleserøkten.")
     if len(history) == 2:
@@ -137,6 +127,7 @@ def main():
                 base = next((item for item in st.session_state.history
                              if item["id"] == st.session_state.get("pending_base")), None)
                 st.session_state.history = [base, entry] if base else (st.session_state.history + [entry])[-2:]
+                st.session_state.selected_run = entry["id"]
             else:
                 st.session_state.flash = status.get("message", "Beregningen mislyktes.")
                 jobs().cancel(identifier)

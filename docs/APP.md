@@ -56,8 +56,12 @@ erstatter redigeringsinnstillingene, men sletter ikke fullførte resultater.
    beregnes automatisk. Endring av kontroller starter ingen beregning.
 2. Trykk **Kjør simulering**. **Avbryt beregningen** stopper prosessen og
    beholder tidligere fullførte resultater.
-3. Bruk **Lagret tidssteg** for å se lagrede tetthetsbilder. Tittelen viser
-   faktisk fysisk tid og sannsynlighet i boksen.
+3. Trykk **Spill av** for å animere de lagrede bildene. **Pause** stopper
+   visningen; **Start på nytt** spiller fra første bilde. **Hastighet**
+   velger 2, 4 eller 8 bilder per sekund og endrer bare visningen.
+   Flytting av **Lagret tidssteg** pauser avspillingen ved det valgte bildet.
+   Den stopper automatisk ved siste bilde. Trykk Spill av igjen for å starte
+   fra begynnelsen. Tittelen viser faktisk fysisk tid og sannsynlighet.
 4. Velg **Sammenlikn** i sidepanelet. Velg en fullført kjøring som utgangspunkt,
    deretter én parameter og dens nye verdi. Sluttiden og andre innstillinger
    beholdes. Appen viser hva som faktisk endret seg, inkludert eventuelle
@@ -91,6 +95,14 @@ Python-API-et med komplekse rammer når fase er nødvendig.
 I Sammenlikn beholdes den valgte utgangskjøringen sammen med det nye
 resultatet, også når du velger den eldste av de to. De to bildene bruker
 samme 2D-fargeskala og viser nærmeste faktisk lagrede tidspunkt.
+
+Avspillingen er pauset når du velger en annen kjøring. Spilleren bruker bare
+lagrede tettheter og starter ingen ny beregning. Bare bildeområdet og dets
+mål oppdateres under avspilling; diagrammer og sammenlikninger beregnes ikke
+på nytt for hvert bilde. Hastigheten er et mål for visningen, og langsommere
+maskiner kan hoppe over bilder for å følge avspillingsklokken. Den fysiske
+tiden følger alltid det faktisk viste, lagrede bildet.
+PNG-knappen ved spilleren laster ned det viste bildet.
 
 ## Numerical interpretation
 
@@ -132,6 +144,7 @@ down the server. Use the terminal to stop it.
 - `app_model.py`: experiment settings, validation, solver calls and exports.
 - `app_presets.py`: fixed presets, final-time fitting and controlled-change helpers.
 - `app_controls.py`: simple, comparison and advanced editing, with persistent drafts.
+- `app_playback.py`: elapsed-time playback of saved frames, pause/seek/restart and image caching.
 - `app_jobs.py` / `app_worker.py`: subprocess lifecycle and cancellation.
 - `web_app.py`: Streamlit controls and result comparison.
 
@@ -148,6 +161,8 @@ UI method selection, two-run comparison and frame scrubbing without
 recalculation. Additional tests cover exact final-time fitting, the three-field
 default, settings surviving mode changes, preset resets, and preservation of
 the selected baseline when a third comparison is run.
+Playback tests check the wall-clock advance, pause, seeking, restart, speed
+changes and automatic stop, with worker startup explicitly forbidden during playback.
 The optional UI tests skip when Streamlit is not installed.
 CI runs the app tests on Windows, macOS and Linux with Python 3.12.
 

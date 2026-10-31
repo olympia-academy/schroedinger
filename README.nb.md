@@ -15,6 +15,8 @@ last ned et forsøksoppsett som den andre bidragsyteren kan åpne igjen:
 
 Start med **Utforsk** og et ferdig forsøk. **Sammenlikn** lar deg endre én
 parameter ved fast sluttid; resten av innstillingene finnes i **Avansert**.
+Ferdige kjøringer kan spilles av, pauses og startes på nytt med valgfri
+visningshastighet, uten ny beregning.
 
 ![Rettet dobbeltspaltedemo ved t = 7,03125](docs/images/double-slit.png)
 

@@ -101,3 +101,38 @@ def test_compare_without_a_run_and_cancel_long_worker():
     assert not app.exception
     assert not app.session_state.get("pending")
     assert app.session_state["history"] == []
+
+
+def test_play_pause_restart_speed_and_seek_never_start_a_new_worker(monkeypatch):
+    from schroedinger.app_jobs import JobManager
+    app = AppTest.from_file(str(APP)).run(timeout=15)
+    small_run(app)
+    entry = app.session_state["history"][0]
+    frame_key = f"frame_{entry['id']}"
+
+    def unexpected_worker(*args, **kwargs):
+        pytest.fail("Playback must use saved frames, not start a simulation")
+    monkeypatch.setattr(JobManager, "start", unexpected_worker)
+    app.button(key="playback_toggle").click().run(timeout=15)
+    assert not app.exception
+    assert app.session_state["playback_playing"]
+    assert app.slider(key=frame_key).value < len(entry["run"].times)-1
+    app.button(key="playback_toggle").click().run(timeout=15)
+    assert not app.session_state["playback_playing"]
+    app.selectbox(key="playback_fps").set_value(2).run(timeout=15)
+    assert app.session_state["playback_fps"] == 2
+    app.button(key="playback_restart").click().run(timeout=15)
+    assert app.session_state["playback_playing"]
+    app.slider(key=frame_key).set_value(1).run(timeout=15)
+    assert not app.exception
+    assert not app.session_state["playback_playing"]
+    assert app.slider(key=frame_key).value == 1
+    # Drive the public clock state forward to test automatic end-of-playback.
+    app.button(key="playback_toggle").click().run(timeout=15)
+    app.session_state["playback_updated"] = time.monotonic()-10
+    app.run(timeout=15)
+    assert not app.exception
+    assert not app.session_state["playback_playing"]
+    assert app.slider(key=frame_key).value == len(entry["run"].times)-1
+    assert app.session_state["history"][0]["id"] == entry["id"]
+    assert not app.session_state.get("pending")
