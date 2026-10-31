@@ -187,7 +187,7 @@ def controls(jobs):
                     st.rerun()
                 except (ValueError, UnicodeError) as exc:
                     st.error(str(exc))
-        st.radio("Arbeidsmåte", ["Utforsk", "Sammenlikn", "Avansert"], key="work_mode")
+        st.radio("Arbeidsmåte", ["Utforsk", "Sammenlikn", "Avansert"], key="work_mode", horizontal=True)
         base_id = None
         if st.session_state.work_mode == "Sammenlikn":
             selection = controlled_edit(st.session_state.history)
@@ -216,7 +216,6 @@ def controls(jobs):
         except (ValueError, TypeError, OverflowError) as exc:
             st.error(f"Kontroller oppsettet: {exc}")
             return None
-        st.caption("Innstillinger kan endres uten å starte en beregning.")
         if st.button("Kjør simulering", type="primary", disabled=jobs.busy()):
             try:
                 st.session_state.pending = jobs.start(experiment)
