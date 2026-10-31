@@ -170,10 +170,11 @@ class RunData:
         return json.dumps(self.metadata(), indent=2, ensure_ascii=False)
 
 
-def calculate(experiment):
+def calculate(experiment, *, progress_callback=None):
     config = experiment.configuration()
     mask, potential = get_barrier_mask(config), get_potential(config)
-    result = simulate(get_wave_packet(config), potential, config, mask)
+    result = simulate(get_wave_packet(config), potential, config, mask,
+                      progress_callback=progress_callback)
     summary = report(result, config)
     summary.update(dx=config.initial_values.dx, boundaries=boundary_details(config, mask),
                    python=platform.python_version(), numpy=np.__version__, scipy=scipy.__version__)

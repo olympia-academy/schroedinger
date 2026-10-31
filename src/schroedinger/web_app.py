@@ -43,7 +43,11 @@ def main():
             return
         status = jobs().status(identifier)
         if status["status"] == "running":
-            st.info(f"Beregner · {status['seconds']:.0f} sekunder")
+            fraction = status["completed_steps"]/status["total_steps"]
+            label = {"starting": "Starter beregningen …",
+                     "saving": "Beregning fullført · lagrer resultat …"}.get(
+                         status["stage"], f"Beregner · {100*status['completed_steps']//status['total_steps']}% fullført")
+            st.progress(fraction, text=label)
             if st.button("Avbryt beregningen", key="cancel_job"):
                 jobs().cancel(identifier)
                 st.session_state.pending = None
@@ -62,7 +66,8 @@ def main():
             st.rerun()
 
     monitor()
-    show_results(jobs())
+    if st.session_state.history or not st.session_state.get("pending"):
+        show_results(jobs())
     with st.expander("Fysikk og tolkning"):
         st.markdown("""**Periodiske ytterkanter** kan sende bølger inn igjen på motsatt side.
 **Dirichlet-ytterkanter** reflekterer bølger når absorberen er av.

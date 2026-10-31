@@ -35,6 +35,7 @@ class JobManager:
             self._clear()
             self.directory = tempfile.TemporaryDirectory(prefix="olympia-schroedinger-")
             path = Path(self.directory.name)
+            self.progress = {"completed_steps": 0, "total_steps": experiment.steps, "stage": "starting"}
             (path/"request.json").write_text(json.dumps({"schema_version": 1, "experiment": asdict(experiment)}), encoding="utf-8")
             self.log = (path/"worker.log").open("wb")
             env = dict(os.environ, OPENBLAS_NUM_THREADS="1", OMP_NUM_THREADS="1",
@@ -56,7 +57,16 @@ class JobManager:
             if identifier != self.identifier or not self.process:
                 return {"status": "expired", "message": "Denne kjøringen er ikke lenger tilgjengelig. Start på nytt."}
             if self.process.poll() is None:
-                return {"status": "running", "seconds": monotonic()-self.started}
+                try:
+                    snapshot = json.loads((Path(self.directory.name)/"progress.json").read_text(encoding="utf-8"))
+                    if (snapshot["total_steps"] == self.progress["total_steps"]
+                            and type(snapshot["completed_steps"]) is int
+                            and self.progress["completed_steps"] <= snapshot["completed_steps"] <= snapshot["total_steps"]
+                            and snapshot["stage"] in {"computing", "saving"}):
+                        self.progress = snapshot
+                except (OSError, ValueError, KeyError, TypeError):
+                    pass  # Keep the last valid update while a file is unavailable.
+                return {"status": "running", "seconds": monotonic()-self.started, **self.progress}
             status = Path(self.directory.name)/"status.json"
             if status.exists():
                 return json.loads(status.read_text(encoding="utf-8"))

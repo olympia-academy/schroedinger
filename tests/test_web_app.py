@@ -170,3 +170,25 @@ def test_display_changes_preserve_densities_and_export_can_reopen(monkeypatch):
     loaded = read_result(io.BytesIO(app.session_state["result_export"][1]))
     assert loaded.experiment == run.experiment
     assert loaded.summary == run.summary
+
+def test_progress_bar_shows_actual_completion_and_saving_phase(monkeypatch):
+    from schroedinger.app_jobs import JobManager
+    snapshot = {"status": "running", "completed_steps": 0, "total_steps": 100, "stage": "starting"}
+    monkeypatch.setattr(JobManager, "status", lambda self, identifier: snapshot)
+    app = AppTest.from_file(str(APP)).run(timeout=15)
+    app.session_state["pending"] = "progress-test"
+    app.run(timeout=15)
+    assert not app.exception
+    assert app.get("progress")[0].proto.value == 0
+    assert app.get("progress")[0].proto.text == "Starter beregningen …"
+    snapshot.update(completed_steps=37, stage="computing")
+    app.run(timeout=15)
+    assert app.get("progress")[0].proto.value == 37
+    assert "37%" in app.get("progress")[0].proto.text
+    snapshot.update(completed_steps=100, stage="saving")
+    app.run(timeout=15)
+    assert app.get("progress")[0].proto.value == 100
+    assert "lagrer resultat" in app.get("progress")[0].proto.text
+    app.button(key="cancel_job").click().run(timeout=15)
+    assert not app.session_state.get("pending")
+    assert not app.get("progress")

@@ -50,6 +50,10 @@ standardforsøket trenger du bare spaltebredde, spalteavstand og fysisk sluttid.
 
 1. Velg et forsøk og trykk **Kjør simulering**. Ingen beregning starter ved
    endring av innstillinger. **Avbryt beregningen** stopper den aktive prosessen.
+   Fremdriftslinjen viser prosent av faktisk fullførte beregningssteg.
+   Oppstart og lagring av resultat vises som egne faser; prosent er ikke et
+   estimat av gjenstående veggklokketid. Fremdriften oppdateres omtrent én gang
+   per sekund i appen og krever ingen endring av fysikkparametere.
 2. Resultatet åpnes ved siste bilde. Bruk **Spill av**, **Pause**, **Start på
    nytt** eller **Lagret tidssteg**. Hastighet velger 2/4/8/12/24 bilder/s;
    standard er 12. Søking pauser. Avspillingen stopper ved siste bilde.
