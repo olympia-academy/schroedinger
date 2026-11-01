@@ -24,6 +24,9 @@ the default playback speed is 12 frames/s.
 The light display highlights weak patterns and keeps a shared color scale for
 comparisons. Region probabilities, 2D density profiles and guided time-step/grid
 checks help interpret results. See the [app guide](docs/APP.md) for their limits.
+For a controlled physics check, choose **Fri bølgepakke – referanse (1D)**:
+compare mean position and spreading with the analytic free Gaussian and export
+the moments. See the [reference experiment](docs/FREE_WAVEPACKET.md).
 
 ## Install
 

@@ -20,6 +20,9 @@ visningshastighet, uten ny beregning.
 Lys visning fremhever svake mønstre; sammenlikning bruker felles fargeskala.
 Regionandeler, tetthetsprofiler og veiledet kontroll av tidssteg/rutenett hjelper
 med vurderingen. [Appveiledningen](docs/APP.md) forklarer målingene og begrensningene.
+Velg **Fri bølgepakke – referanse (1D)** for en kontrollert sammenlikning av
+middelposisjon og spredning med den analytiske løsningen. Se
+[referanseforsøket](docs/FREE_WAVEPACKET.md) for formler og målte avvik.
 
 ![Rettet dobbeltspaltedemo ved t = 7,03125](docs/images/double-slit.png)
 
