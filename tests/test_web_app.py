@@ -192,3 +192,23 @@ def test_progress_bar_shows_actual_completion_and_saving_phase(monkeypatch):
     app.button(key="cancel_job").click().run(timeout=15)
     assert not app.session_state.get("pending")
     assert not app.get("progress")
+
+def test_free_reference_preset_and_analysis_are_available_without_changing_other_presets():
+    app = AppTest.from_file(str(APP)).run(timeout=15)
+    app.selectbox(key="preset_key").set_value("free_reference").run()
+    assert not app.exception
+    assert {item.key for item in app.number_input} == {"edit_px", "edit_sigma_x", "edit_final_time"}
+    assert app.session_state["draft"]["dimension"] == 1
+    assert app.session_state["draft"]["absorber"] is False
+    assert app.session_state["draft"]["sigma_x"] == 2
+    start(app)
+    wait_for_runs(app, 1)
+    assert any("Middelposisjon ⟨x⟩" == item.value for item in app.markdown)
+    assert any("Standardavvik Δx" == item.value for item in app.markdown)
+    assert len(app.dataframe) == 1
+    app.radio(key="work_mode").set_value("Avansert").run()
+    app.checkbox(key="edit_absorber").check().run()
+    start(app)
+    wait_for_runs(app, 2)
+    assert not app.exception
+    assert any("Kantabsorpsjon er aktiv" in warning.value for warning in app.warning)

@@ -11,6 +11,7 @@ from .app_analysis import density_difference, refined_experiment
 from .app_model import read_result, write_result
 from .app_playback import show_player
 from .app_presets import changes
+from .app_wavepacket import show_free_packet
 
 
 def add_entry(run, name, base_id=None, validation=None):
@@ -112,6 +113,7 @@ def show_results(jobs):
         st.caption("x, tid og potensial bruker modellens valgte enheter. Profilen viser øyeblikkelig tetthet, ikke akkumulert strøm eller detektortreff.")
     show_player(displayed, palette, gamma, screen_x)
     st.line_chart(budget_chart(run))
+    show_free_packet(run, entry["name"], selected)
     with st.expander("Lagre resultat og oppsett"):
         st.caption("Komplett resultatfil inneholder alle lagrede float32-tettheter, tider, oppsett og diagnostikk. Fase er ikke lagret. JSON inneholder bare oppsett og rapport.")
         if st.button("Klargjør komplett resultatfil", key="prepare_export"):

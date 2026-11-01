@@ -10,6 +10,7 @@ PRESETS = {
     "single_slit": "Enkeltspalte (2D)",
     "tunneling": "Tunnelering (1D)",
     "free": "Fri bølgepakke (2D)",
+    "free_reference": "Fri bølgepakke – referanse (1D)",
 }
 
 
@@ -22,6 +23,11 @@ def preset(name):
         return Experiment.defaults(1)
     if name == "free":
         return replace(Experiment(), scenario="free", wave="gaussian_packet")
+    if name == "free_reference":
+        return replace(Experiment.defaults(1), scenario="free", nx=1024,
+                       x_min=-12.0, x_max=12.0, mass=1.0, hbar=1.0,
+                       x0=-4.0, px=2.0, sigma_x=2.0, dt=0.002, steps=1000,
+                       absorber=False)
     raise ValueError("Ukjent forsøksoppsett.")
 
 

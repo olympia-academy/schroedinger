@@ -44,8 +44,9 @@ This first version is for local use, not a public multi-user service.
 
 ## Slik prøver dere appen
 
-Startsiden bruker **Utforsk**, med fire ferdige utgangspunkt: dobbeltspalte
-(2D), enkeltspalte (2D), tunnelering (1D) og fri bølgepakke (2D). For
+Startsiden bruker **Utforsk**, med fem ferdige utgangspunkt: dobbeltspalte
+(2D), enkeltspalte (2D), tunnelering (1D), fri bølgepakke (2D) og
+**Fri bølgepakke – referanse (1D)**. For
 standardforsøket trenger du bare spaltebredde, spalteavstand og fysisk sluttid.
 
 1. Velg et forsøk og trykk **Kjør simulering**. Ingen beregning starter ved
@@ -119,6 +120,27 @@ Den er et øyeblikksbilde, ikke et tidsintegrert detektorsignal eller en
 sannsynlighetsstrøm. Tetthetsdata alene er ikke tilstrekkelige til all
 fase-/strømanalyse. x, t og V bruker modellens valgte enheter.
 
+### Fri bølgepakke som fysisk referanse
+
+Velg **Fri bølgepakke – referanse (1D)** og kjør simuleringen. Under resultatet
+vises middelposisjon ⟨x⟩ og standardavvik Δx gjennom hele den lagrede kjøringen,
+sammen med den analytiske løsningen for en fri Gauss-pakke på uendelig linje.
+Ved sluttiden t=2 er de analytiske verdiene ⟨x⟩=0 og Δx=√2. Breddeparameteren
+σx=2 i innstillingene tilsvarer initialt standardavvik Δx₀=1.
+
+Dette forsøket bruker ingen absorber og har ytterkanter langt fra pakken.
+Hvis du aktiverer absorpsjon eller pakken kommer for nær ytterkantene, vises
+et varsel og den analytiske kurven og feiltabellen skjules. Momentene vises
+fortsatt, betinget på sannsynligheten som er igjen i boksen. Grensen for
+analytisk halemasse er et varselkriterium, ikke en nøyaktighetsgaranti.
+
+**Last ned middelposisjon og spredning** lagrer tid, momenter, referanse,
+halemasse og referansens gyldighetsflagg i CSV. Dette virker også for
+gjenåpnede 1D-fripakker uten ny simulering. Prøv deretter **Dobbelt så fint
+rutenett** under den eksisterende numeriske kontrollen og velg den nye
+kjøringen for å se dens momentavvik. Se [FREE_WAVEPACKET.md](FREE_WAVEPACKET.md)
+for formler, målte avvik, forutsetninger og et reproduserbart eksempel.
+
 ### Lagre og gjenåpne resultater
 
 Åpne **Lagre resultat og oppsett → Klargjør komplett resultatfil → Last ned
@@ -186,6 +208,7 @@ after collection or cancellation. Closing the browser does not stop the server.
 - `app_model.py`: experiment settings, solver calls and validated portable files.
 - `app_presets.py` / `app_controls.py`: presets, final-time fitting and controls.
 - `app_analysis.py`: saved-frame selection, region/profile measurements and refinement.
+- `wavepacket.py` / `app_wavepacket.py`: conditional position moments and a free-Gaussian reference.
 - `app_results.py`: result views, complete import/export and numerical checks.
 - `app_playback.py` / `player.mjs`: shared display data and browser-only playback.
 - `app_jobs.py` / `app_worker.py`: one numerical subprocess and cancellation.
